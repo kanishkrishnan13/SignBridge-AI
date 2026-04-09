@@ -1,0 +1,5 @@
+Flask
+MediaPipe
+TensorFlow
+OpenCV
+gTTS
