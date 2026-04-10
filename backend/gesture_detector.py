@@ -127,8 +127,6 @@ class GestureDetector:
 
     def _rule_based_predict(self, landmarks):
         """Heuristic fallback when no trained model is available."""
-        import random
-
         points = np.array([[lm.x, lm.y, lm.z] for lm in landmarks])
 
         finger_tips = [4, 8, 12, 16, 20]
@@ -141,7 +139,7 @@ class GestureDetector:
 
         sign_map = {0: 'no', 1: 'pain', 2: 'yes', 3: 'water', 4: 'help', 5: 'thank_you'}
         label = sign_map.get(extended, 'help')
-        confidence = min(0.75 + random.uniform(-0.1, 0.15), 0.99)
+        confidence = 0.80  # fixed value for deterministic behaviour
 
         all_preds = [{'label': label, 'confidence': confidence}]
         return label, confidence, all_preds

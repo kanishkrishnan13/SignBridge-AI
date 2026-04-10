@@ -49,8 +49,8 @@ def detect():
         result = gesture_detector.detect(frame)
         return jsonify(result)
     except Exception as e:
-        logger.error(f"Detection error: {e}")
-        return jsonify({'error': str(e), 'label': 'unknown', 'confidence': 0.0}), 500
+        logger.error(f"Detection error: {e}", exc_info=True)
+        return jsonify({'error': 'Detection failed', 'label': 'unknown', 'confidence': 0.0}), 500
 
 
 @app.route('/api/speech', methods=['POST'])
@@ -72,8 +72,8 @@ def speech():
 
         return jsonify({'audio': audio_data, 'format': 'mp3', 'text': text, 'language': language})
     except Exception as e:
-        logger.error(f"TTS error: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"TTS error: {e}", exc_info=True)
+        return jsonify({'error': 'Speech synthesis failed'}), 500
 
 
 @app.route('/api/mapper', methods=['POST'])
@@ -87,8 +87,8 @@ def mapper():
         result = nlp_mapper.map_to_signs(text)
         return jsonify(result)
     except Exception as e:
-        logger.error(f"Mapper error: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Mapper error: {e}", exc_info=True)
+        return jsonify({'error': 'Sign mapping failed'}), 500
 
 
 @app.route('/api/calibrate', methods=['POST'])
@@ -101,8 +101,8 @@ def calibrate():
         result = calibration.update(data['landmarks'])
         return jsonify(result)
     except Exception as e:
-        logger.error(f"Calibration error: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Calibration error: {e}", exc_info=True)
+        return jsonify({'error': 'Calibration update failed'}), 500
 
 
 if __name__ == '__main__':

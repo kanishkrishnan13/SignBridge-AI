@@ -63,7 +63,7 @@ class CalibrationModule:
                 dtype=np.float64,
             )
 
-            # Distance from wrist (0) to middle finger tip (12)
+            # Distance from wrist (landmark 0) to middle finger tip (landmark 12)
             hand_size = float(np.linalg.norm(points[12] - points[0]))
 
             n = self.calibration_data['samples']

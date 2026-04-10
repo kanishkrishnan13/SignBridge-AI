@@ -41,34 +41,7 @@ class NLPMapper:
         'thank': 'thank_you', 'thanks': 'thank_you', 'grateful': 'thank_you',
     }
 
-    # Each tuple: (compiled pattern, handler returning list[str])
-    _PHRASE_PATTERNS = [
-        (re.compile(r'\b(i have|i am having)\s+(\w+)\s+pain\b'), '_handle_body_pain'),
-        (re.compile(r'\bcall.*doctor\b'),                         '_handle_static'),
-        (re.compile(r'\bno\s+pain\b'),                            '_handle_static'),
-        (re.compile(r'\bneed.*help\b'),                           '_handle_static'),
-        (re.compile(r'\bthank\s+you\b'),                          '_handle_static'),
-    ]
-
-    _PHRASE_RESULTS = {
-        r'\bcall.*doctor\b': ['call_doctor'],
-        r'\bno\s+pain\b':    ['no_pain'],
-        r'\bneed.*help\b':   ['help'],
-        r'\bthank\s+you\b':  ['thank_you'],
-    }
-
     def __init__(self):
-        # Pre-compile phrase patterns for reuse
-        self._compiled_phrases = [
-            (re.compile(pattern), result)
-            for pattern, result in [
-                (r'\bi have (\w+) pain\b',    None),   # handled specially
-                (r'\bcall.*doctor\b',          ['call_doctor']),
-                (r'\bno\s+pain\b',             ['no_pain']),
-                (r'\bneed.*help\b',            ['help']),
-                (r'\bthank\s+you\b',           ['thank_you']),
-            ]
-        ]
         logger.info("NLP Mapper initialized")
 
     def map_to_signs(self, text):
