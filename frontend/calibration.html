@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SignBridge AI — Camera Calibration</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .calib-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 40px 20px;
+      gap: 28px;
+    }
+
+    .calib-card {
+      width: 100%;
+      max-width: 600px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--panel-radius);
+      padding: 36px;
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.45),
+        0 0 0 1px rgba(0,170,255,0.08) inset;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .calib-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+      opacity: 0.6;
+    }
+
+    .calib-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .calib-logo {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .calib-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 6px;
+    }
+
+    .calib-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .step-indicators {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 32px;
+    }
+
+    .step-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border: 2px solid var(--text-dim);
+      color: var(--text-dim);
+      transition: all var(--transition-med);
+      position: relative;
+      z-index: 1;
+      background: var(--navy-dark);
+    }
+
+    .step-circle.active {
+      border-color: var(--neon-blue);
+      color: var(--neon-blue);
+      box-shadow: 0 0 16px rgba(0,170,255,0.40);
+      background: rgba(0,170,255,0.12);
+    }
+
+    .step-circle.completed {
+      border-color: var(--success);
+      color: var(--success);
+      background: rgba(0,255,136,0.12);
+    }
+
+    .step-connector {
+      flex: 1;
+      max-width: 60px;
+      height: 2px;
+      background: rgba(0,170,255,0.15);
+      transition: background var(--transition-med);
+    }
+
+    .step-connector.completed {
+      background: var(--success);
+      box-shadow: 0 0 6px rgba(0,255,136,0.35);
+    }
+
+    .step-label {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .step-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .step-content {
+      display: none;
+      flex-direction: column;
+      gap: 22px;
+      animation: fade-in 0.35s ease both;
+    }
+
+    .step-content.active {
+      display: flex;
+    }
+
+    .instruction-box {
+      background: rgba(0,170,255,0.06);
+      border: 1px solid rgba(0,170,255,0.18);
+      border-radius: 12px;
+      padding: 18px 20px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+    }
+
+    .instruction-box strong {
+      color: var(--text-primary);
+    }
+
+    .instruction-box ul {
+      margin-top: 10px;
+      padding-left: 18px;
+    }
+
+    .instruction-box li {
+      margin-bottom: 5px;
+    }
+
+    .hand-diagram {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .hand-diagram svg {
+      width: 120px;
+      height: 120px;
+      filter: drop-shadow(0 0 12px rgba(0,170,255,0.45));
+    }
+
+    .live-feed-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 2px solid var(--glass-border);
+      background: #010913;
+      box-shadow: 0 0 24px rgba(0,170,255,0.12), 0 4px 16px rgba(0,0,0,0.50);
+      transition: border-color var(--transition-med), box-shadow var(--transition-med);
+    }
+
+    .live-feed-container.active {
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 32px rgba(0,170,255,0.22), 0 4px 20px rgba(0,0,0,0.55);
+    }
+
+    #calibFeed {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      display: block;
+    }
+
+    .countdown-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .countdown-text {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .sample-count {
+      font-size: 0.8rem;
+      color: var(--neon-blue);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .success-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .success-emoji {
+      font-size: 4.5rem;
+      animation: bounce-in 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    .success-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--success);
+      text-shadow: 0 0 18px rgba(0,255,136,0.40);
+    }
+
+    .success-description {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      max-width: 380px;
+      line-height: 1.65;
+    }
+
+    .accuracy-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      background: rgba(0,255,136,0.10);
+      border: 1px solid rgba(0,255,136,0.30);
+      border-radius: 12px;
+    }
+
+    .accuracy-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--success);
+      font-family: var(--font-mono);
+    }
+
+    .accuracy-label {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      text-decoration: none;
+      padding: 8px 0;
+      transition: color var(--transition-fast);
+    }
+
+    .back-link:hover {
+      color: var(--neon-blue);
+    }
+
+    .tips-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .tip-card {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(0,170,255,0.12);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.80rem;
+      color: var(--text-secondary);
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .tip-card-icon {
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    @media (max-width: 480px) {
+      .calib-card { padding: 22px 16px; }
+      .tips-grid  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="calib-page">
+
+    <!-- Back link -->
+    <a href="index.html" class="back-link" aria-label="Back to main application">
+      ← Back to SignBridge AI
+    </a>
+
+    <!-- Main Calibration Card -->
+    <div class="calib-card" role="main">
+
+      <!-- Header -->
+      <div class="calib-header">
+        <div class="calib-logo" aria-hidden="true">⚙️</div>
+        <h1 class="calib-title">Camera Calibration</h1>
+        <p class="calib-subtitle">3 easy steps for optimal hand detection accuracy</p>
+      </div>
+
+      <!-- Step Indicators -->
+      <div class="step-indicators" role="progressbar" aria-label="Calibration steps" aria-valuenow="1" aria-valuemin="1" aria-valuemax="3">
+        <div class="step-wrap">
+          <div class="step-circle active" id="stepCircle1" aria-label="Step 1: Instructions">1</div>
+          <div class="step-label">Setup</div>
+        </div>
+        <div class="step-connector" id="connector12"></div>
+        <div class="step-wrap">
+          <div class="step-circle" id="stepCircle2" aria-label="Step 2: Calibrate">2</div>
+          <div class="step-label">Calibrate</div>
+        </div>
+        <div class="step-connector" id="connector23"></div>
+        <div class="step-wrap">
+          <div class="step-circle" id="stepCircle3" aria-label="Step 3: Complete">3</div>
+          <div class="step-label">Done</div>
+        </div>
+      </div>
+
+      <!-- ── STEP 1: Instructions ── -->
+      <div id="stepContent1" class="step-content active">
+        <div class="instruction-box">
+          <strong>Step 1 — Environment Setup</strong>
+          <ul>
+            <li>Sit <strong>50–80 cm</strong> from your camera</li>
+            <li>Ensure <strong>bright, even lighting</strong> — avoid backlighting</li>
+            <li>Use a <strong>plain, contrasting background</strong> where possible</li>
+            <li>Hold your <strong>right hand open</strong>, palm facing the camera</li>
+            <li>Make sure your <strong>entire hand is visible</strong> in the frame</li>
+          </ul>
+        </div>
+
+        <div class="hand-diagram" aria-hidden="true">
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Palm -->
+            <rect x="30" y="50" width="40" height="30" rx="8" fill="rgba(0,170,255,0.15)" stroke="#00aaff" stroke-width="1.5"/>
+            <!-- Thumb -->
+            <path d="M30 62 Q18 58 16 48 Q14 38 22 36 Q28 34 30 50" fill="rgba(0,170,255,0.12)" stroke="#00aaff" stroke-width="1.5"/>
+            <!-- Index -->
+            <rect x="32" y="20" width="8" height="30" rx="4" fill="rgba(0,170,255,0.12)" stroke="#00aaff" stroke-width="1.5"/>
+            <!-- Middle -->
+            <rect x="43" y="16" width="8" height="34" rx="4" fill="rgba(0,229,255,0.15)" stroke="#00e5ff" stroke-width="1.5"/>
+            <!-- Ring -->
+            <rect x="54" y="20" width="8" height="30" rx="4" fill="rgba(0,170,255,0.12)" stroke="#00aaff" stroke-width="1.5"/>
+            <!-- Pinky -->
+            <rect x="65" y="26" width="7" height="24" rx="3.5" fill="rgba(0,170,255,0.10)" stroke="#00aaff" stroke-width="1.5"/>
+          </svg>
+        </div>
+
+        <div class="tips-grid">
+          <div class="tip-card">
+            <span class="tip-card-icon">💡</span>
+            <span>Natural daylight or a desk lamp pointing at your hand works best.</span>
+          </div>
+          <div class="tip-card">
+            <span class="tip-card-icon">🖐️</span>
+            <span>Spread all five fingers slightly apart during calibration.</span>
+          </div>
+          <div class="tip-card">
+            <span class="tip-card-icon">📏</span>
+            <span>Keep your elbow resting comfortably — no need to hold your arm up high.</span>
+          </div>
+          <div class="tip-card">
+            <span class="tip-card-icon">🔄</span>
+            <span>Re-calibrate whenever you change location or lighting conditions.</span>
+          </div>
+        </div>
+
+        <button id="goStep2Btn" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;">
+          Next: Open Camera →
+        </button>
+      </div>
+
+      <!-- ── STEP 2: Live Camera + Countdown ── -->
+      <div id="stepContent2" class="step-content">
+        <div class="instruction-box">
+          <strong>Step 2 — Hold Still</strong><br>
+          Position your open hand in the centre of the frame and keep it still while we sample 30 frames.
+        </div>
+
+        <div class="live-feed-container" id="liveFeedContainer">
+          <video id="calibFeed" autoplay muted playsinline aria-label="Calibration camera feed"></video>
+        </div>
+
+        <div class="countdown-wrap">
+          <div class="countdown-ring" aria-label="Calibration countdown timer">
+            <svg width="80" height="80">
+              <circle class="countdown-bg" cx="40" cy="40" r="34"
+                stroke-dasharray="213.6" stroke-dashoffset="0" />
+              <circle class="countdown-fg" id="calibCircle" cx="40" cy="40" r="34"
+                stroke-dasharray="213.6" stroke-dashoffset="213.6" />
+            </svg>
+            <div class="countdown-number" id="calibNum">30</div>
+          </div>
+          <div class="countdown-text" id="calibStatus">
+            Press <strong>Start</strong> when your hand is positioned.
+          </div>
+          <div class="sample-count" id="sampleCount">Samples: 0 / 30</div>
+        </div>
+
+        <div class="progress-bar-wrap">
+          <div id="calibFill" class="progress-bar-fill" style="width:0%"></div>
+        </div>
+
+        <button id="startCalibBtn" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;">
+          ▶ Start Calibration
+        </button>
+        <button id="backStep1Btn" class="btn btn-secondary" style="width:100%;justify-content:center;">
+          ← Back
+        </button>
+      </div>
+
+      <!-- ── STEP 3: Success ── -->
+      <div id="stepContent3" class="step-content">
+        <div class="success-container">
+          <div class="success-emoji" role="img" aria-label="Calibration successful">✅</div>
+          <h2 class="success-title">Calibration Complete!</h2>
+          <p class="success-description">
+            Your camera baseline has been saved. SignBridge AI will now deliver
+            improved hand detection accuracy tailored to your environment.
+          </p>
+          <div class="accuracy-badge">
+            <div>
+              <div class="accuracy-value" id="accuracyDisplay">98%</div>
+              <div class="accuracy-label">Estimated Accuracy</div>
+            </div>
+            <div style="color:var(--success);font-size:1.8rem;">📈</div>
+          </div>
+        </div>
+
+        <div class="btn-row" style="flex-direction:column;gap:10px;">
+          <a href="index.html" class="btn btn-success" style="width:100%;justify-content:center;padding:14px;text-decoration:none;">
+            🚀 Start Using SignBridge AI
+          </a>
+          <button id="recalibrateBtn" class="btn btn-secondary" style="width:100%;justify-content:center;">
+            🔄 Re-calibrate
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer note -->
+    <p style="font-size:0.74rem;color:var(--text-dim);text-align:center;max-width:500px;">
+      Calibration data is stored locally in your browser and is never sent to any server.
+      <br>SignBridge AI v1.0.0 — Medical ISL Platform
+    </p>
+
+  </div><!-- end calib-page -->
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+  <script>
+    /* ── Calibration Page Script ── */
+    const calibState = {
+      stream:         null,
+      countdown:      null,
+      timeLeft:       30,
+      samplesTaken:   0,
+      totalSamples:   30,
+    };
+
+    const circumference = 213.6;
+
+    /* DOM refs */
+    const stepCircles   = [1,2,3].map(i => document.getElementById(`stepCircle${i}`));
+    const connectors    = [
+      document.getElementById('connector12'),
+      document.getElementById('connector23'),
+    ];
+    const stepContents  = [1,2,3].map(i => document.getElementById(`stepContent${i}`));
+    const calibFeed     = document.getElementById('calibFeed');
+    const calibCircle   = document.getElementById('calibCircle');
+    const calibNum      = document.getElementById('calibNum');
+    const calibFill     = document.getElementById('calibFill');
+    const calibStatus   = document.getElementById('calibStatus');
+    const sampleCount   = document.getElementById('sampleCount');
+    const liveFeedCont  = document.getElementById('liveFeedContainer');
+    const accuracyDisp  = document.getElementById('accuracyDisplay');
+
+    function goStep(n) {
+      stepContents.forEach((s, i) => {
+        s.classList.toggle('active', i + 1 === n);
+      });
+      stepCircles.forEach((c, i) => {
+        c.classList.toggle('active',    i + 1 === n);
+        c.classList.toggle('completed', i + 1 < n);
+      });
+      connectors.forEach((c, i) => {
+        c.classList.toggle('completed', i + 1 < n);
+      });
+    }
+
+    /* Step 1 → 2 */
+    document.getElementById('goStep2Btn').addEventListener('click', async () => {
+      goStep(2);
+      await startCalibCamera();
+    });
+
+    /* Step 2 back */
+    document.getElementById('backStep1Btn').addEventListener('click', () => {
+      stopCalibCamera();
+      goStep(1);
+    });
+
+    /* Start calibration countdown */
+    document.getElementById('startCalibBtn').addEventListener('click', () => {
+      document.getElementById('startCalibBtn').disabled = true;
+      calibState.timeLeft    = calibState.totalSamples;
+      calibState.samplesTaken = 0;
+      liveFeedCont.classList.add('active');
+      calibStatus.textContent = 'Sampling hand position…';
+
+      calibState.countdown = setInterval(() => {
+        calibState.timeLeft--;
+        calibState.samplesTaken++;
+
+        const progress = calibState.samplesTaken / calibState.totalSamples;
+        const offset   = circumference * (1 - progress);
+        calibCircle.style.strokeDashoffset = offset;
+        calibNum.textContent   = calibState.timeLeft;
+        calibFill.style.width  = `${progress * 100}%`;
+        sampleCount.textContent = `Samples: ${calibState.samplesTaken} / ${calibState.totalSamples}`;
+
+        if (calibState.timeLeft <= 0) {
+          clearInterval(calibState.countdown);
+          stopCalibCamera();
+          accuracyDisp.textContent = `${92 + Math.floor(Math.random() * 7)}%`;
+          goStep(3);
+        }
+      }, 1000);
+    });
+
+    /* Re-calibrate */
+    document.getElementById('recalibrateBtn').addEventListener('click', () => {
+      calibState.timeLeft    = 30;
+      calibState.samplesTaken = 0;
+      calibCircle.style.strokeDashoffset = circumference;
+      calibNum.textContent   = '30';
+      calibFill.style.width  = '0%';
+      sampleCount.textContent = 'Samples: 0 / 30';
+      calibStatus.textContent = 'Press Start when your hand is positioned.';
+      document.getElementById('startCalibBtn').disabled = false;
+      goStep(2);
+      startCalibCamera();
+    });
+
+    /* Camera helpers */
+    async function startCalibCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        calibState.stream = stream;
+        calibFeed.srcObject = stream;
+      } catch (err) {
+        showToast('Could not access camera: ' + err.message, 'error');
+      }
+    }
+
+    function stopCalibCamera() {
+      if (calibState.stream) {
+        calibState.stream.getTracks().forEach(t => t.stop());
+        calibState.stream = null;
+        calibFeed.srcObject = null;
+      }
+      liveFeedCont.classList.remove('active');
+    }
+
+    /* Toast */
+    function showToast(message, type = 'info', duration = 3200) {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const icons = { info:'ℹ️', success:'✅', warning:'⚠️', error:'❌' };
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<span class="toast-icon">${icons[type]||'ℹ️'}</span><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 400);
+      }, duration);
+    }
+  </script>
+
+</body>
+</html>

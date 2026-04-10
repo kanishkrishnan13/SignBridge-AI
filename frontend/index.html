@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="SignBridge AI — Real-time Indian Sign Language medical communication platform" />
+  <meta name="theme-color" content="#020d1f" />
+  <title>SignBridge AI — Medical ISL Platform</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤝</text></svg>" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════ APP WRAPPER ═══════════════════════════ -->
+  <div class="app-wrapper">
+
+    <!-- ─── HEADER ─── -->
+    <header class="app-header" role="banner">
+      <div class="header-brand">
+        <span class="header-logo" aria-hidden="true">🤝</span>
+        <div>
+          <div class="header-title">SignBridge AI</div>
+          <div class="header-tagline">Medical Indian Sign Language Platform</div>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <label for="globalLangSelect" class="visually-hidden">Interface Language</label>
+        <select id="globalLangSelect" class="lang-selector" aria-label="Select interface language">
+          <option value="en-US">🌐 EN</option>
+          <option value="ta-IN">தமிழ் TA</option>
+          <option value="hi-IN">हिंदी HI</option>
+        </select>
+
+        <button id="calibrateBtn" class="icon-btn" title="Run Calibration" aria-label="Open calibration wizard">
+          ⚙️
+        </button>
+        <button id="fullscreenBtn" class="icon-btn" title="Toggle Fullscreen" aria-label="Toggle fullscreen">
+          ⛶
+        </button>
+        <button id="helpBtn" class="icon-btn" title="Help" aria-label="Open help">
+          ❓
+        </button>
+      </div>
+    </header>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="app-container" role="main">
+
+      <!-- ══════════════════ LEFT PANEL — PATIENT ══════════════════ -->
+      <section class="panel patient-panel" aria-label="Patient Sign Detection">
+
+        <!-- Panel Header -->
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <span class="panel-title-icon" aria-hidden="true">📷</span>
+            Patient Sign Detection
+          </h2>
+          <div id="patientStatus" class="status-indicator active" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="status-text">AI ACTIVE</span>
+          </div>
+        </div>
+
+        <!-- Camera Feed -->
+        <div id="cameraContainer" class="camera-container" aria-label="Live camera feed">
+          <div id="cameraPlaceholder" class="camera-placeholder" aria-live="polite">
+            <span class="camera-placeholder-icon" aria-hidden="true">📹</span>
+            <span>Camera initialising…</span>
+            <span style="font-size:0.74rem;color:var(--text-dim)">Allow camera access to begin</span>
+          </div>
+          <video id="videoFeed" autoplay muted playsinline
+            aria-label="Webcam video feed"
+            style="display:none;"></video>
+          <canvas id="landmarkCanvas" aria-hidden="true"></canvas>
+        </div>
+
+        <!-- Detection Result -->
+        <div class="detection-result" aria-live="polite" aria-atomic="true">
+          <div class="detection-label">Detected Sign</div>
+          <div id="detectionText" class="detection-text">
+            <span id="detectionOutput">Waiting for gesture…</span>
+            <span class="typing-cursor" id="typingCursor" aria-hidden="true"></span>
+          </div>
+          <!-- Confidence Bar -->
+          <div class="confidence-container">
+            <div class="confidence-header">
+              <span>Confidence</span>
+              <span id="confidenceValue" class="confidence-value">0%</span>
+            </div>
+            <div class="confidence-track" role="progressbar"
+              aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
+              aria-label="Detection confidence">
+              <div id="confidenceBar" class="confidence-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detection Controls -->
+        <div class="btn-row">
+          <button id="startDetectionBtn" class="btn btn-primary" aria-label="Start sign detection">
+            ▶ Start Detection
+          </button>
+          <button id="stopDetectionBtn" class="btn btn-danger" disabled aria-label="Stop sign detection">
+            ⏹ Stop
+          </button>
+          <button id="snapshotBtn" class="btn btn-secondary" disabled aria-label="Capture snapshot">
+            📸 Snapshot
+          </button>
+        </div>
+
+        <hr class="section-divider" />
+
+        <!-- Patient Chat History -->
+        <div class="chat-section">
+          <div class="chat-section-label">
+            Detected Signs History
+          </div>
+          <div id="patientChatHistory" class="chat-history"
+            role="log" aria-live="polite" aria-label="Patient sign detection history">
+            <div class="chat-empty" id="patientChatEmpty">
+              No signs detected yet. Start detection to begin.
+            </div>
+          </div>
+          <button id="clearPatientBtn" class="btn btn-secondary"
+            style="align-self:flex-end;font-size:0.76rem;padding:6px 12px;"
+            aria-label="Clear patient chat history">
+            🗑 Clear
+          </button>
+        </div>
+
+      </section>
+      <!-- ══════════════════ END LEFT PANEL ══════════════════ -->
+
+
+      <!-- ══════════════════ RIGHT PANEL — DOCTOR ══════════════════ -->
+      <section class="panel doctor-panel" aria-label="Doctor Communication">
+
+        <!-- Panel Header -->
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <span class="panel-title-icon" aria-hidden="true">🩺</span>
+            Doctor Communication
+          </h2>
+          <div id="doctorStatus" class="status-indicator listening" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span class="status-text">LISTENING</span>
+          </div>
+        </div>
+
+        <!-- 3D Avatar Canvas -->
+        <div id="avatarContainer" class="avatar-container" aria-label="Sign language avatar">
+          <canvas id="avatarCanvas" aria-hidden="true"></canvas>
+          <div class="avatar-label" id="avatarSignLabel" aria-live="polite">IDLE</div>
+        </div>
+
+        <!-- Sign Playback Controls -->
+        <div class="sign-controls">
+          <label for="signSelect" class="visually-hidden">Select Sign</label>
+          <select id="signSelect" class="sign-select" aria-label="Select sign to demonstrate">
+            <option value="">— Select Sign —</option>
+            <option value="help">Help</option>
+            <option value="pain">Pain</option>
+            <option value="headache">Headache</option>
+            <option value="stomach_pain">Stomach Pain</option>
+            <option value="chest_pain">Chest Pain</option>
+            <option value="emergency">Emergency</option>
+            <option value="stop">Stop</option>
+            <option value="call_doctor">Call Doctor</option>
+            <option value="no_pain">No Pain</option>
+            <option value="head">Head</option>
+            <option value="chest">Chest</option>
+            <option value="stomach">Stomach</option>
+            <option value="back">Back</option>
+            <option value="hand">Hand</option>
+            <option value="leg">Leg</option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+            <option value="thank_you">Thank You</option>
+            <option value="water">Water</option>
+            <option value="medicine">Medicine</option>
+          </select>
+          <button id="playSignBtn" class="btn btn-primary" aria-label="Play selected sign">
+            ▶ Show Sign
+          </button>
+          <button id="stopSignBtn" class="btn btn-secondary" aria-label="Stop sign animation">
+            ⏹
+          </button>
+        </div>
+
+        <!-- Doctor Text Input -->
+        <div class="doctor-input-area">
+          <div class="input-row">
+            <textarea
+              id="doctorTextInput"
+              class="text-input"
+              rows="2"
+              placeholder="Type a message… or press Space to use microphone"
+              aria-label="Doctor message input"
+            ></textarea>
+            <button id="micBtn" class="mic-btn" title="Hold to speak (Space)" aria-label="Start voice input">
+              🎙️
+            </button>
+          </div>
+
+          <div class="btn-row">
+            <button id="sendTextBtn" class="btn btn-primary" aria-label="Convert text to sign language">
+              🤟 Text → Sign
+            </button>
+            <button id="ttsSpeakBtn" class="btn btn-success" aria-label="Speak text aloud">
+              🔊 Speak
+            </button>
+            <label for="doctorLangSelect" class="visually-hidden">Doctor Language</label>
+            <select id="doctorLangSelect" class="lang-selector" aria-label="Doctor speech language">
+              <option value="en-US">EN</option>
+              <option value="ta-IN">TA</option>
+              <option value="hi-IN">HI</option>
+            </select>
+          </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <!-- Doctor Chat History -->
+        <div class="chat-section">
+          <div class="chat-section-label">
+            Conversation History
+            <span style="font-size:0.65rem;color:var(--text-dim);font-weight:400;margin-left:8px">
+              <span class="kbd">Space</span> = mic
+            </span>
+          </div>
+          <div id="doctorChatHistory" class="chat-history"
+            role="log" aria-live="polite" aria-label="Conversation history">
+            <div class="chat-empty" id="doctorChatEmpty">
+              No conversation yet. Type or speak to begin.
+            </div>
+          </div>
+          <button id="clearDoctorBtn" class="btn btn-secondary"
+            style="align-self:flex-end;font-size:0.76rem;padding:6px 12px;"
+            aria-label="Clear doctor chat history">
+            🗑 Clear
+          </button>
+        </div>
+
+      </section>
+      <!-- ══════════════════ END RIGHT PANEL ══════════════════ -->
+
+    </main>
+
+    <!-- ─── FOOTER ─── -->
+    <footer class="app-footer" role="contentinfo">
+      <div class="footer-left">
+        <span class="footer-version">SignBridge AI v1.0.0</span>
+        <span>•</span>
+        <span style="color:var(--text-dim)">Medical ISL Platform</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span id="connectionBadge" class="offline-badge online">
+          <span>●</span> Online
+        </span>
+        <span style="color:var(--text-dim);font-size:0.68rem;">
+          Built with ❤️ for accessibility
+        </span>
+      </div>
+    </footer>
+
+  </div>
+  <!-- ═══════════════════════════ END APP WRAPPER ═══════════════════════════ -->
+
+
+  <!-- ═══════════════════════════ CALIBRATION MODAL ═══════════════════════════ -->
+  <div id="calibrationModal" class="modal-overlay" role="dialog"
+    aria-modal="true" aria-labelledby="calibrationTitle">
+    <div class="modal">
+      <button class="modal-close" id="closeCalibrationBtn" aria-label="Close calibration">✕</button>
+
+      <h3 class="modal-title" id="calibrationTitle">⚙️ Camera Calibration</h3>
+      <p class="modal-subtitle" id="calibrationSubtitle">
+        Follow the steps below to calibrate hand detection for best accuracy.
+      </p>
+
+      <!-- Wizard Steps -->
+      <div class="wizard-steps" role="progressbar" aria-label="Calibration progress">
+        <div class="wizard-step active" id="wizStep1" aria-label="Step 1"></div>
+        <div class="wizard-step" id="wizStep2" aria-label="Step 2"></div>
+        <div class="wizard-step" id="wizStep3" aria-label="Step 3"></div>
+      </div>
+
+      <!-- Step 1: Instructions -->
+      <div id="calibStep1" class="calibration-step-content active">
+        <div class="calibration-instructions">
+          <strong>Step 1 — Prepare your hand position</strong><br><br>
+          • Sit about <strong>50–80 cm</strong> from the camera<br>
+          • Ensure good, even lighting with no strong shadows<br>
+          • Hold your right hand in front of you, palm facing the camera<br>
+          • Keep your hand open and relaxed<br>
+          • Make sure your entire hand is visible in the frame
+        </div>
+        <div style="text-align:center;">
+          <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖐️</text></svg>"
+            alt="Open hand facing camera" width="80" style="opacity:0.7;" />
+        </div>
+        <button id="calibStep1Btn" class="btn btn-primary" style="width:100%;justify-content:center;">
+          Next: Start Camera →
+        </button>
+      </div>
+
+      <!-- Step 2: Live Camera + Countdown -->
+      <div id="calibStep2" class="calibration-step-content">
+        <div class="calibration-instructions">
+          <strong>Step 2 — Hold still for calibration</strong><br>
+          Keep your open hand steady in the centre of the frame.
+        </div>
+        <div class="calibration-camera">
+          <video id="calibVideo" autoplay muted playsinline></video>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px;justify-content:center;">
+          <div class="countdown-ring" aria-label="Calibration countdown">
+            <svg width="80" height="80">
+              <circle class="countdown-bg" cx="40" cy="40" r="34"
+                stroke-dasharray="213.6" stroke-dashoffset="0" />
+              <circle class="countdown-fg" id="countdownCircle" cx="40" cy="40" r="34"
+                stroke-dasharray="213.6" stroke-dashoffset="0" />
+            </svg>
+            <div class="countdown-number" id="countdownNum">30</div>
+          </div>
+          <div style="color:var(--text-secondary);font-size:0.85rem;line-height:1.5;">
+            Sampling hand position…<br>
+            <span id="calibProgressText" style="color:var(--neon-blue);">Ready when you are.</span>
+          </div>
+        </div>
+        <div class="progress-bar-wrap">
+          <div id="calibProgressBar" class="progress-bar-fill" style="width:0%"></div>
+        </div>
+        <button id="calibStep2Btn" class="btn btn-primary" style="width:100%;justify-content:center;">
+          ▶ Start Calibration
+        </button>
+      </div>
+
+      <!-- Step 3: Success -->
+      <div id="calibStep3" class="calibration-step-content">
+        <div class="success-icon" role="img" aria-label="Calibration complete">✅</div>
+        <div style="text-align:center;">
+          <h4 style="color:var(--success);font-size:1.1rem;margin-bottom:8px;">
+            Calibration Complete!
+          </h4>
+          <p style="color:var(--text-secondary);font-size:0.88rem;line-height:1.5;">
+            Your camera is now calibrated for optimal hand detection accuracy.<br>
+            You can re-calibrate at any time from the settings button.
+          </p>
+        </div>
+        <button id="calibDoneBtn" class="btn btn-success" style="width:100%;justify-content:center;">
+          🚀 Start Using SignBridge AI
+        </button>
+      </div>
+
+    </div>
+  </div>
+  <!-- ═══════════════════════════ END CALIBRATION MODAL ═══════════════════════════ -->
+
+
+  <!-- ═══════════════════════════ TOAST CONTAINER ═══════════════════════════ -->
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-label="Notifications"></div>
+
+
+  <!-- ═══════════════════════════ SCRIPTS ═══════════════════════════ -->
+  <!-- Three.js r128 CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+    crossorigin="anonymous"
+    integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0A=="
+    ></script>
+
+  <!-- Application Modules -->
+  <script src="avatar.js"></script>
+  <script src="speech.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
