@@ -42,7 +42,7 @@ scikit-learn==1.4.2
 gTTS==2.3.2
 
 # Image processing
-Pillow==10.2.0
+Pillow==10.3.0
 
 # HTTP client (for test pipeline script)
 requests==2.31.0
