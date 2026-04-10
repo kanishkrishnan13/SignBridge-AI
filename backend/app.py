@@ -88,10 +88,7 @@ def _decode_frame(b64_string: str) -> np.ndarray:
 
 
 def _json_error(message: str, status: int = 400):
-    # Never surface internal exception detail to the caller for server errors;
-    # safe validation messages (4xx) are fine to return verbatim.
-    safe_message = message if status < 500 else "An internal server error occurred."
-    return jsonify({'error': safe_message}), status
+    return jsonify({'error': message}), status
 
 
 # ---------------------------------------------------------------------------
@@ -146,9 +143,9 @@ def detect():
 
     try:
         result = gesture_detector.predict(frame)
-    except Exception as exc:
+    except Exception:
         log.exception("Gesture detection error")
-        return _json_error(f"Detection failed: {exc}", 500)
+        return _json_error("Gesture detection failed.", 500)
 
     return jsonify({
         'label':      result.get('label', 'unknown'),
@@ -183,12 +180,9 @@ def speech():
     try:
         audio_bytes = tts_engine.synthesize(text, language)
         audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
-    except RuntimeError as exc:
-        log.error("TTS synthesis error: %s", exc)
-        return _json_error(str(exc), 500)
-    except Exception as exc:
-        log.exception("TTS synthesis unexpected error")
-        return _json_error(f"Speech synthesis failed: {exc}", 500)
+    except Exception:
+        log.exception("TTS synthesis error")
+        return _json_error("Speech synthesis failed.", 500)
 
     return jsonify({'audio': audio_b64})
 
@@ -220,9 +214,9 @@ def mapper():
 
     try:
         result = nlp_mapper.map_sentence(word)
-    except Exception as exc:
+    except Exception:
         log.exception("NLP mapping error")
-        return _json_error(f"Mapping failed: {exc}", 500)
+        return _json_error("Text mapping failed.", 500)
 
     return jsonify(result)
 
@@ -272,9 +266,9 @@ def calibrate_frame():
 
     try:
         result = calibrator.process_frame(frame)
-    except Exception as exc:
+    except Exception:
         log.exception("Calibration frame processing error")
-        return _json_error(f"Calibration failed: {exc}", 500)
+        return _json_error("Calibration frame processing failed.", 500)
 
     return jsonify(result)
 
