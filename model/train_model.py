@@ -78,10 +78,6 @@ def plot_training_curves(history, save_path: str) -> None:
 
 
 def convert_to_tflite(keras_model_path: str, tflite_path: str) -> None:
-    converter = tf.lite.TFLiteConverter.from_keras_model_file(keras_model_path) \
-        if hasattr(tf.lite.TFLiteConverter, "from_keras_model_file") \
-        else tf.lite.TFLiteConverter.from_saved_model(keras_model_path)
-    # Use the simpler from_keras_model API which is available in TF 2.x
     model = tf.keras.models.load_model(keras_model_path)
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     converter.optimizations = [tf.lite.Optimize.DEFAULT]
