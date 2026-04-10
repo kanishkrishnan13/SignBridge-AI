@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0e1a">
+    <title>SignBridge AI — Mobile</title>
+    <style>
+        :root {
+            --bg: #0a0e1a;
+            --card: rgba(255,255,255,0.06);
+            --neon: #00d4ff;
+            --green: #00ff88;
+            --red: #ff4757;
+            --text: #e8f4fd;
+            --muted: #4a6480;
+            --border: rgba(0,212,255,0.18);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; overflow: hidden; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: rgba(10,14,26,0.98);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .logo { font-size: 1.1rem; font-weight: 700; }
+        .logo span { color: var(--neon); }
+        .status-pill {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(0,212,255,0.3);
+            color: var(--neon);
+            background: rgba(0,212,255,0.08);
+        }
+
+        /* Tab bar */
+        .tabs {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px 0;
+            text-align: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab.active { color: var(--neon); border-bottom-color: var(--neon); }
+
+        /* Content area */
+        .content { flex: 1; overflow-y: auto; padding: 12px; display: none; flex-direction: column; gap: 12px; }
+        .content.active { display: flex; }
+
+        /* Camera */
+        .camera-wrap {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: #060a14;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        #mobileVideo {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        #mobileCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .camera-hint {
+            position: absolute;
+            bottom: 10px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: var(--neon);
+            font-size: 0.7rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(0,212,255,0.25);
+            white-space: nowrap;
+        }
+
+        /* Result card */
+        .result-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+        }
+        .result-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+        .result-sign { font-size: 1.8rem; font-weight: 700; color: var(--neon); min-height: 44px; }
+        .conf-bar-wrap { height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+        .conf-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--neon), var(--green)); transition: width 0.3s; }
+
+        /* History */
+        .history { display: flex; flex-direction: column; gap: 8px; }
+        .hist-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--neon);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+        .hist-item .ts { font-size: 0.65rem; color: var(--muted); margin-bottom: 2px; }
+
+        /* Doctor panel */
+        .section-title {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .mic-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+        .mic-btn-mobile {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: rgba(0,212,255,0.1);
+            border: 2px solid rgba(0,212,255,0.4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .mic-btn-mobile.active {
+            background: rgba(255,71,87,0.15);
+            border-color: var(--red);
+        }
+        .mic-status { font-size: 0.8rem; color: var(--muted); }
+        .speech-display {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            color: var(--muted);
+            min-height: 44px;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        .text-row { display: flex; gap: 8px; }
+        .text-row input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .text-row input:focus { outline: none; border-color: var(--neon); }
+        .text-row button {
+            background: rgba(0,212,255,0.15);
+            border: 1px solid rgba(0,212,255,0.4);
+            color: var(--neon);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .sign-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .chip {
+            padding: 5px 12px;
+            border-radius: 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(0,212,255,0.08);
+            border: 1px solid rgba(0,212,255,0.25);
+            color: var(--neon);
+            cursor: pointer;
+            text-transform: capitalize;
+        }
+        .chip.active { background: rgba(0,212,255,0.22); border-color: var(--neon); color: white; }
+
+        /* Emergency button */
+        .emergency-btn {
+            width: 100%;
+            padding: 18px;
+            background: rgba(255,71,87,0.12);
+            border: 2px solid rgba(255,71,87,0.5);
+            border-radius: 14px;
+            color: var(--red);
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            text-align: center;
+        }
+        .emergency-btn:active { background: rgba(255,71,87,0.25); }
+
+        /* Quick signs */
+        .quick-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .quick-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text);
+            transition: all 0.15s;
+            text-transform: capitalize;
+        }
+        .quick-btn:active { border-color: var(--neon); background: rgba(0,212,255,0.1); }
+        .quick-btn .emoji { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">🤝 SignBridge <span>AI</span></div>
+    <div class="status-pill" id="mobileStatus">OFFLINE</div>
+</header>
+
+<div class="tabs">
+    <div class="tab active" onclick="switchTab('patient')">👤 Patient</div>
+    <div class="tab" onclick="switchTab('doctor')">👨‍⚕️ Doctor</div>
+    <div class="tab" onclick="switchTab('quick')">⚡ Quick</div>
+</div>
+
+<!-- Patient Tab -->
+<div class="content active" id="tab-patient">
+    <div class="camera-wrap">
+        <video id="mobileVideo" autoplay playsinline muted></video>
+        <canvas id="mobileCanvas"></canvas>
+        <div class="camera-hint" id="mobileHint">Place hand in view</div>
+    </div>
+    <div class="result-card">
+        <div class="result-label">Detected Sign</div>
+        <div class="result-sign" id="mobileSign">—</div>
+        <div class="conf-bar-wrap"><div class="conf-bar" id="mobileConfBar"></div></div>
+    </div>
+    <div class="result-card">
+        <div class="result-label">History</div>
+        <div class="history" id="mobileHistory"></div>
+    </div>
+</div>
+
+<!-- Doctor Tab -->
+<div class="content" id="tab-doctor">
+    <div class="result-card">
+        <div class="section-title">🎤 Voice Input</div>
+        <div class="mic-row">
+            <button class="mic-btn-mobile" id="mobileMicBtn" onclick="toggleMobileMic()">🎤</button>
+            <span class="mic-status" id="mobileMicStatus">Tap to speak</span>
+        </div>
+        <div class="speech-display" id="mobileSpeechDisplay">Doctor speech appears here...</div>
+        <div class="text-row">
+            <input type="text" id="mobileTextInput" placeholder="Or type here..." />
+            <button onclick="mobileSendText()">Send</button>
+        </div>
+        <div class="sign-chips" id="mobileSignChips"></div>
+    </div>
+</div>
+
+<!-- Quick Signs Tab -->
+<div class="content" id="tab-quick">
+    <button class="emergency-btn" onclick="quickSign('emergency')">🚨 EMERGENCY</button>
+    <div class="quick-grid" id="quickGrid"></div>
+</div>
+
+<script>
+// Use configurable API base: honour window.SIGNBRIDGE_API if set by the WebView host,
+// otherwise fall back to the same origin (works when served from the backend itself)
+// or localhost for development.
+const API = (typeof window.SIGNBRIDGE_API !== 'undefined')
+  ? window.SIGNBRIDGE_API
+  : (window.location.hostname === '' || window.location.hostname === 'localhost'
+      ? 'http://localhost:5000'
+      : window.location.origin);
+const QUICK_SIGNS = [
+    {sign:'help', emoji:'🙋'},
+    {sign:'pain', emoji:'😣'},
+    {sign:'headache', emoji:'🤕'},
+    {sign:'stomach_pain', emoji:'🤢'},
+    {sign:'chest_pain', emoji:'💔'},
+    {sign:'stop', emoji:'✋'},
+    {sign:'call_doctor', emoji:'📞'},
+    {sign:'no_pain', emoji:'😊'},
+    {sign:'water', emoji:'💧'},
+    {sign:'medicine', emoji:'💊'},
+    {sign:'yes', emoji:'✅'},
+    {sign:'no', emoji:'❌'},
+    {sign:'thank_you', emoji:'🙏'},
+    {sign:'back', emoji:'🔙'},
+    {sign:'leg', emoji:'🦵'},
+];
+
+let mobileStream = null;
+let mobileDetecting = false;
+let mobileRecognition = null;
+let mobileListening = false;
+
+// Build quick grid
+const qg = document.getElementById('quickGrid');
+QUICK_SIGNS.forEach(({sign, emoji}) => {
+    const btn = document.createElement('button');
+    btn.className = 'quick-btn';
+    btn.innerHTML = `<span class="emoji">${emoji}</span>${sign.replace(/_/g,' ')}`;
+    btn.onclick = () => quickSign(sign);
+    qg.appendChild(btn);
+});
+
+function switchTab(name) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.remove('active'));
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    const tabs = ['patient','doctor','quick'];
+    const idx = tabs.indexOf(name);
+    document.querySelectorAll('.tab')[idx].classList.add('active');
+    document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+// Health check
+async function checkHealth() {
+    try {
+        const r = await fetch(`${API}/api/health`, {signal: AbortSignal.timeout(3000)});
+        document.getElementById('mobileStatus').textContent = r.ok ? 'ONLINE' : 'ERROR';
+    } catch { document.getElementById('mobileStatus').textContent = 'OFFLINE'; }
+}
+
+// Camera init
+async function initMobileCamera() {
+    try {
+        mobileStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: {ideal:640}, height: {ideal:480} },
+            audio: false,
+        });
+        const v = document.getElementById('mobileVideo');
+        v.srcObject = mobileStream;
+        await v.play();
+        const c = document.getElementById('mobileCanvas');
+        v.addEventListener('loadedmetadata', () => { c.width = v.videoWidth; c.height = v.videoHeight; });
+        mobileDetecting = true;
+        setInterval(mobileDetect, 600);
+        document.getElementById('mobileHint').textContent = 'Show your hand sign';
+    } catch(e) {
+        document.getElementById('mobileHint').textContent = 'Camera unavailable';
+    }
+}
+
+async function mobileDetect() {
+    if (!mobileDetecting) return;
+    const v = document.getElementById('mobileVideo');
+    if (v.readyState < 2) return;
+    const tc = document.createElement('canvas');
+    tc.width = v.videoWidth || 640; tc.height = v.videoHeight || 480;
+    tc.getContext('2d').drawImage(v, 0, 0, tc.width, tc.height);
+    const b64 = tc.toDataURL('image/jpeg', 0.7).split(',')[1];
+    try {
+        const r = await fetch(`${API}/api/detect`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({frame: b64}),
+            signal: AbortSignal.timeout(3000),
+        });
+        if (!r.ok) return;
+        const d = await r.json();
+        if (d.label && d.label !== 'unknown' && d.confidence >= 0.45) {
+            const lbl = d.label.replace(/_/g,' ');
+            document.getElementById('mobileSign').textContent = lbl;
+            document.getElementById('mobileConfBar').style.width = `${Math.round(d.confidence*100)}%`;
+            document.getElementById('mobileHint').textContent = 'Hand detected ✓';
+            addMobileHistory(lbl, d.confidence);
+        }
+    } catch {}
+}
+
+function addMobileHistory(label, conf) {
+    const h = document.getElementById('mobileHistory');
+    const t = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const d = document.createElement('div');
+    d.className = 'hist-item';
+    d.innerHTML = `<div class="ts">${t}</div><strong>${label}</strong> (${Math.round(conf*100)}%)`;
+    h.prepend(d);
+    if (h.children.length > 10) h.lastElementChild.remove();
+}
+
+// Speech
+function initMobileSpeech() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { document.getElementById('mobileMicStatus').textContent = 'Not supported'; return; }
+    mobileRecognition = new SR();
+    mobileRecognition.continuous = false;
+    mobileRecognition.interimResults = true;
+    mobileRecognition.onstart = () => {
+        mobileListening = true;
+        document.getElementById('mobileMicBtn').classList.add('active');
+        document.getElementById('mobileMicStatus').textContent = 'Listening...';
+    };
+    mobileRecognition.onresult = e => {
+        let final = '', interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+            if (e.results[i].isFinal) final += e.results[i][0].transcript;
+            else interim += e.results[i][0].transcript;
+        }
+        document.getElementById('mobileSpeechDisplay').textContent = final || interim;
+        if (final) mobileSendText(final.trim());
+    };
+    mobileRecognition.onend = () => {
+        mobileListening = false;
+        document.getElementById('mobileMicBtn').classList.remove('active');
+        document.getElementById('mobileMicStatus').textContent = 'Tap to speak';
+    };
+    mobileRecognition.onerror = () => { mobileListening = false; };
+}
+
+function toggleMobileMic() {
+    if (!mobileRecognition) return;
+    if (mobileListening) { mobileRecognition.stop(); }
+    else { try { mobileRecognition.start(); } catch(e) {} }
+}
+
+async function mobileSendText(text) {
+    const inp = document.getElementById('mobileTextInput');
+    const t = text || inp.value.trim();
+    if (!t) return;
+    if (inp && !text) inp.value = '';
+    document.getElementById('mobileSpeechDisplay').textContent = t;
+    try {
+        const r = await fetch(`${API}/api/mapper`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({text: t}),
+            signal: AbortSignal.timeout(5000),
+        });
+        if (!r.ok) return;
+        const d = await r.json();
+        showMobileChips(d.signs || []);
+    } catch {}
+}
+
+function showMobileChips(signs) {
+    const c = document.getElementById('mobileSignChips');
+    c.innerHTML = '';
+    signs.forEach(s => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = s.replace(/_/g,' ');
+        chip.onclick = () => quickSign(s);
+        c.appendChild(chip);
+    });
+}
+
+async function quickSign(sign) {
+    document.getElementById('mobileSign').textContent = sign.replace(/_/g,' ');
+    try {
+        await fetch(`${API}/api/speech`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({text: sign.replace(/_/g,' '), language: 'en'}),
+            signal: AbortSignal.timeout(5000),
+        });
+    } catch {}
+}
+
+// Init
+checkHealth();
+initMobileCamera();
+initMobileSpeech();
+
+// Prevent zoom on double-tap
+let lastTap = 0;
+document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTap < 300) e.preventDefault();
+    lastTap = now;
+}, {passive: false});
+</script>
+</body>
+</html>

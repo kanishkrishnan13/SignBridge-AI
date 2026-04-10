@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignBridge AI — Medical ISL Communication Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+            integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb"
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo">
+            <span class="logo-icon">🤝</span>
+            <span class="logo-text">SignBridge <span class="neon">AI</span></span>
+        </div>
+        <div class="header-controls">
+            <div class="status-badge" id="statusBadge">
+                <span class="status-dot"></span>
+                <span id="statusText">INITIALIZING</span>
+            </div>
+            <select id="languageSelect" class="lang-select">
+                <option value="en">🇬🇧 English</option>
+                <option value="ta">🇮🇳 Tamil</option>
+                <option value="hi">🇮🇳 Hindi</option>
+            </select>
+            <button class="btn-calibrate" onclick="startCalibration()">⚙️ Calibrate</button>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <section class="panel patient-panel">
+            <div class="panel-header">
+                <span class="panel-icon">👤</span>
+                <h2>Patient</h2>
+                <span class="panel-subtitle">ISL Gesture Detection</span>
+                <div class="panel-status" id="detectionStatus">● DETECTING</div>
+            </div>
+            <div class="camera-container">
+                <video id="videoFeed" autoplay playsinline muted></video>
+                <canvas id="overlayCanvas"></canvas>
+                <div class="camera-overlay-ui">
+                    <div class="hand-guide" id="handGuide">Place hand in view</div>
+                </div>
+                <div class="camera-controls">
+                    <button class="btn-icon" id="toggleCamera" onclick="toggleCamera()">📷 Camera</button>
+                    <button class="btn-icon" id="toggleDetection" onclick="toggleDetection()">🔍 Detect</button>
+                </div>
+            </div>
+            <div class="prediction-panel glass-card">
+                <div class="prediction-header">
+                    <span>Detected Sign</span>
+                    <span class="confidence-label" id="confidenceLabel">0%</span>
+                </div>
+                <div class="prediction-text" id="predictionText">
+                    <span class="typing-animation">Waiting for gesture...</span>
+                </div>
+                <div class="confidence-bar-container">
+                    <div class="confidence-bar" id="confidenceBar"></div>
+                </div>
+                <div class="top-predictions" id="topPredictions"></div>
+            </div>
+            <div class="output-panel glass-card">
+                <div class="output-header">
+                    <span>🔊 Speech Output</span>
+                    <div class="output-controls">
+                        <button class="btn-sm" onclick="speakLastSign()">▶ Speak</button>
+                        <button class="btn-sm" onclick="clearPatientHistory()">🗑 Clear</button>
+                    </div>
+                </div>
+                <div class="conversation-history" id="patientHistory"></div>
+            </div>
+        </section>
+
+        <div class="center-divider">
+            <div class="divider-line"></div>
+            <div class="divider-icon">⟺</div>
+            <div class="divider-line"></div>
+        </div>
+
+        <section class="panel doctor-panel">
+            <div class="panel-header">
+                <span class="panel-icon">👨‍⚕️</span>
+                <h2>Doctor</h2>
+                <span class="panel-subtitle">Speech → ISL Avatar</span>
+                <div class="panel-status listening" id="speechStatus">● READY</div>
+            </div>
+            <div class="avatar-container glass-card">
+                <div class="avatar-header">
+                    <span>3D ISL Avatar</span>
+                    <span class="avatar-fps" id="avatarFps">30 FPS</span>
+                </div>
+                <canvas id="avatarCanvas"></canvas>
+                <div class="avatar-overlay" id="avatarOverlay">
+                    <span>Avatar Ready</span>
+                </div>
+            </div>
+            <div class="speech-controls glass-card">
+                <div class="speech-header">
+                    <span>🎤 Doctor Voice Input</span>
+                </div>
+                <div class="mic-container">
+                    <button class="mic-btn" id="micBtn" onclick="toggleMic()">
+                        <span class="mic-icon">🎤</span>
+                        <div class="mic-pulse"></div>
+                    </button>
+                    <span class="mic-label" id="micLabel">Click to speak</span>
+                </div>
+                <div class="speech-text-display" id="speechTextDisplay">Doctor speech will appear here...</div>
+                <div class="text-input-row">
+                    <input type="text" id="manualTextInput" class="text-input" placeholder="Or type here..." />
+                    <button class="btn-primary" onclick="processManualText()">Send →</button>
+                </div>
+            </div>
+            <div class="sign-queue glass-card">
+                <div class="queue-header">
+                    <span>📋 Sign Queue</span>
+                    <button class="btn-sm" onclick="clearQueue()">Clear</button>
+                </div>
+                <div class="sign-chips" id="signChips"></div>
+            </div>
+            <div class="output-panel glass-card">
+                <div class="output-header">
+                    <span>💬 Conversation History</span>
+                    <button class="btn-sm" onclick="clearDoctorHistory()">🗑 Clear</button>
+                </div>
+                <div class="conversation-history" id="doctorHistory"></div>
+            </div>
+        </section>
+    </main>
+
+    <div class="error-banner" id="errorBanner" style="display:none">
+        <span id="errorMessage"></span>
+        <button onclick="closeError()">✕</button>
+    </div>
+
+    <script src="app.js"></script>
+    <script src="speech.js"></script>
+    <script src="avatar.js"></script>
+</body>
+</html>
