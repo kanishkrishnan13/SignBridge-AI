@@ -130,7 +130,7 @@ Add `--help` to see all options.
 After collecting data, train the sign classifier:
 
 ```bash
-python model/train.py
+python model/train_model.py
 ```
 
 This script:
@@ -274,7 +274,7 @@ gTTS requires an internet connection to synthesise speech (it calls the Google T
 The model has not been trained yet. Run:
 
 ```bash
-python model/train.py
+python model/train_model.py
 ```
 
 ---
