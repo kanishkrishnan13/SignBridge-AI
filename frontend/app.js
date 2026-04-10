@@ -1,6 +1,11 @@
 'use strict';
 
-const API_BASE = 'http://localhost:5000';
+// In Codespaces (or any hosted environment) the frontend is served by the
+// Flask backend itself, so the API lives at the same origin.  When opened
+// locally as a plain file (file:// scheme) fall back to localhost:5000.
+const API_BASE = window.location.protocol === 'file:'
+  ? 'http://localhost:5000'
+  : window.location.origin;
 const DETECT_INTERVAL_MS = 500;
 const MIN_CONFIDENCE = 0.45;
 
