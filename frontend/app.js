@@ -221,28 +221,26 @@ function drawLandmarks(landmarks) {
   ctx.shadowBlur = 8;
   ctx.shadowColor = 'rgba(0, 212, 255, 0.5)';
 
-  // Helper: extract pixel coords from landmark (supports {x,y} objects or [x,y] arrays)
-  function lmCoords(lm) {
-    if (Array.isArray(lm)) return lm;
-    // Backend sends {x, y, z} where x/y are already pixel values (scaled by frame size)
-    return [lm.x / w, lm.y / h];
+  // Backend sends {x, y, z} where x/y are already pixel values (lm.x * frameWidth).
+  // Extract pixel coordinates directly without re-normalising.
+  function lmPx(lm) {
+    if (Array.isArray(lm)) return lm;  // already [px, py] array
+    return [lm.x, lm.y];              // {x, y, z} pixel-value object
   }
 
   for (const [a, b] of connections) {
     if (!landmarks[a] || !landmarks[b]) continue;
-    const [x1, y1] = lmCoords(landmarks[a]);
-    const [x2, y2] = lmCoords(landmarks[b]);
+    const [x1, y1] = lmPx(landmarks[a]);
+    const [x2, y2] = lmPx(landmarks[b]);
     ctx.beginPath();
-    ctx.moveTo(x1 * w, y1 * h);
-    ctx.lineTo(x2 * w, y2 * h);
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
     ctx.stroke();
   }
 
   for (let i = 0; i < landmarks.length; i++) {
     if (!landmarks[i]) continue;
-    const [x, y] = lmCoords(landmarks[i]);
-    const px = x * w;
-    const py = y * h;
+    const [px, py] = lmPx(landmarks[i]);
 
     ctx.fillStyle = i === 0 ? 'rgba(255, 165, 0, 0.9)' :
       [4, 8, 12, 16, 20].includes(i) ? 'rgba(0, 255, 136, 0.9)' :
