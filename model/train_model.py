@@ -40,9 +40,10 @@ def load_data(csv_path):
     logger.info(f"Loading data from {csv_path}")
     df = pd.read_csv(csv_path)
 
-    feature_cols = [c for c in df.columns if c.startswith('kp_')]
+    # CSV columns follow the format x0,y0,z0,...x20,y20,z20 (from extract_keypoints.py)
+    feature_cols = [c for c in df.columns if c != 'label']
     if not feature_cols:
-        raise ValueError("No feature columns (kp_*) found in CSV")
+        raise ValueError("No feature columns found in CSV")
 
     X = df[feature_cols].values.astype(np.float32)
     y = df['label'].values

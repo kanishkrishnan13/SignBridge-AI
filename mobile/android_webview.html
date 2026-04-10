@@ -296,7 +296,14 @@
 </div>
 
 <script>
-const API = 'http://localhost:5000';
+// Use configurable API base: honour window.SIGNBRIDGE_API if set by the WebView host,
+// otherwise fall back to the same origin (works when served from the backend itself)
+// or localhost for development.
+const API = (typeof window.SIGNBRIDGE_API !== 'undefined')
+  ? window.SIGNBRIDGE_API
+  : (window.location.hostname === '' || window.location.hostname === 'localhost'
+      ? 'http://localhost:5000'
+      : window.location.origin);
 const QUICK_SIGNS = [
     {sign:'help', emoji:'🙋'},
     {sign:'pain', emoji:'😣'},

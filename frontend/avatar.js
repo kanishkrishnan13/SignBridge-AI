@@ -211,7 +211,12 @@ const avatar = (() => {
   async function loadAndPlaySign(signName, onComplete) {
     onCompleteCallback = onComplete || null;
     const overlayEl = document.getElementById('avatarOverlay');
-    if (overlayEl) overlayEl.innerHTML = `<span>Playing: ${signName.replace(/_/g,' ')}</span>`;
+    if (overlayEl) {
+      const span = document.createElement('span');
+      span.textContent = `Playing: ${signName.replace(/_/g, ' ')}`;
+      overlayEl.innerHTML = '';
+      overlayEl.appendChild(span);
+    }
 
     // Highlight active chip
     document.querySelectorAll('.sign-chip').forEach(c => {

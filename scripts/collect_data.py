@@ -66,6 +66,7 @@ def main():
             break
 
         display = frame.copy()
+        # Mirror the display so users see a natural reflection (does not affect saved frames)
         cv2.flip(display, 1, display)
 
         # Overlay

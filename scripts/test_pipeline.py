@@ -43,7 +43,7 @@ def check(name, ok, detail=''):
 
 
 def make_dummy_frame_b64():
-    """Create a minimal 10×10 white JPEG as base64."""
+    """Create a minimal 10×10 white PNG as base64 (used as a stand-in frame for API testing)."""
     import struct, zlib
     # Build tiny PNG manually (no PIL dependency)
     def png_chunk(chunk_type, data):

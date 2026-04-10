@@ -191,7 +191,13 @@ function addToDoctorHistory(text) {
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const div = document.createElement('div');
   div.className = 'chat-entry doctor';
-  div.innerHTML = `<div class="timestamp">Doctor · ${time}</div>${text}`;
+  const ts = document.createElement('div');
+  ts.className = 'timestamp';
+  ts.textContent = `Doctor · ${time}`;
+  const msg = document.createElement('span');
+  msg.textContent = text;
+  div.appendChild(ts);
+  div.appendChild(msg);
   el.appendChild(div);
   el.scrollTop = el.scrollHeight;
 }
