@@ -88,7 +88,10 @@ def _decode_frame(b64_string: str) -> np.ndarray:
 
 
 def _json_error(message: str, status: int = 400):
-    return jsonify({'error': message}), status
+    # Never surface internal exception detail to the caller for server errors;
+    # safe validation messages (4xx) are fine to return verbatim.
+    safe_message = message if status < 500 else "An internal server error occurred."
+    return jsonify({'error': safe_message}), status
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +142,7 @@ def detect():
         frame = _decode_frame(frame_b64)
     except Exception as exc:
         log.warning("Frame decode failed: %s", exc)
-        return _json_error(f"Invalid frame data: {exc}")
+        return _json_error("Invalid or unreadable frame data.")
 
     try:
         result = gesture_detector.predict(frame)
@@ -265,7 +268,7 @@ def calibrate_frame():
         frame = _decode_frame(frame_b64)
     except Exception as exc:
         log.warning("Calibration frame decode failed: %s", exc)
-        return _json_error(f"Invalid frame data: {exc}")
+        return _json_error("Invalid or unreadable frame data.")
 
     try:
         result = calibrator.process_frame(frame)
