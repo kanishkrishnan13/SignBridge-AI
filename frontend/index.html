@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SignBridge AI — ISL ↔ Speech</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Loading overlay (shown while backend + camera initialise) -->
+  <div class="loading-overlay visible" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <p class="loading-text" id="loadingText">Connecting to backend…</p>
+  </div>
+
+  <!-- Error banner (transient messages) -->
+  <div class="error-banner" id="errorBanner"></div>
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <header>
+    <div class="logo">SIGN<span>BRIDGE</span> AI</div>
+    <div class="header-status">
+      <div class="status-indicator">
+        <div class="status-dot" id="dotBackend"></div>
+        <span>Backend</span>
+      </div>
+      <div class="status-indicator">
+        <div class="status-dot" id="dotCamera"></div>
+        <span>Camera</span>
+      </div>
+      <div class="status-indicator">
+        <div class="status-dot" id="dotDetecting"></div>
+        <span>Detection</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main two-column layout ──────────────────────────────────────── -->
+  <main class="container">
+
+    <!-- LEFT PANEL: Camera feed + gesture detection -->
+    <section class="panel">
+      <div class="panel-title">
+        <span class="icon">📷</span> ISL Gesture Input
+      </div>
+
+      <!-- Camera + landmark overlay -->
+      <div class="video-container">
+        <video id="videoFeed" autoplay muted playsinline></video>
+        <canvas id="overlayCanvas"></canvas>
+        <span class="video-overlay-label">Live Camera</span>
+      </div>
+
+      <!-- Prediction card -->
+      <div class="prediction-display">
+        <div class="section-label">Detected Gesture</div>
+        <div class="prediction-label" id="predictionLabel">—</div>
+        <div class="prediction-meta">
+          <span class="confidence-label">Confidence</span>
+          <span class="confidence-value" id="confidenceValue">0%</span>
+        </div>
+        <div class="confidence-bar-track">
+          <div class="confidence-bar-fill" id="confidenceBar"></div>
+        </div>
+      </div>
+
+      <!-- Conversation log -->
+      <div class="section-label">Conversation History</div>
+      <div class="chat-history" id="chatHistory">
+        <div class="chat-message system">
+          👋 Show your hand to the camera to begin detecting ISL gestures.
+        </div>
+      </div>
+
+      <!-- Camera controls -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-primary" id="btnStartCamera">▶ Start Camera</button>
+        <button class="btn btn-primary" id="btnCalibrate"
+                style="background:linear-gradient(135deg,#0060cc,#0099cc);">
+          ⚙ Calibrate
+        </button>
+        <button class="btn btn-primary" id="btnClearChat"
+                style="background:rgba(255,255,255,0.07);color:var(--text-secondary);box-shadow:none;">
+          🗑 Clear
+        </button>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Avatar + text/speech input -->
+    <section class="panel">
+      <div class="panel-title">
+        <span class="icon">🤖</span> ISL Avatar &amp; Speech
+      </div>
+
+      <!-- Avatar canvas -->
+      <div class="avatar-container">
+        <canvas id="avatarCanvas"></canvas>
+        <span class="avatar-label">ISL Avatar</span>
+      </div>
+
+      <!-- Language selector -->
+      <div>
+        <div class="section-label">Output Language (TTS)</div>
+        <div class="lang-selector">
+          <button class="lang-btn active" data-lang="en">English</button>
+          <button class="lang-btn" data-lang="ta">Tamil</button>
+          <button class="lang-btn" data-lang="hi">Hindi</button>
+        </div>
+      </div>
+
+      <!-- Text input + mic + send -->
+      <div>
+        <div class="section-label">Type or Speak → Convert to ISL Signs &amp; Speech</div>
+        <div class="input-group">
+          <input
+            type="text"
+            class="text-input"
+            id="textInput"
+            placeholder="e.g. I have chest pain…"
+            autocomplete="off"
+          />
+          <button class="mic-btn" id="micBtn" title="Voice Input">🎤</button>
+          <button class="btn btn-primary" id="sendBtn">Convert</button>
+        </div>
+      </div>
+
+      <!-- Listening indicator -->
+      <div class="listening-indicator" id="listeningIndicator">
+        <div class="listening-bars">
+          <div class="listening-bar"></div>
+          <div class="listening-bar"></div>
+          <div class="listening-bar"></div>
+          <div class="listening-bar"></div>
+          <div class="listening-bar"></div>
+        </div>
+        <span>Listening…</span>
+      </div>
+
+      <!-- NLP result tokens -->
+      <div id="tokenDisplay" style="display:none;">
+        <div class="section-label">ISL Tokens</div>
+        <div id="tokenList"
+             style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Scripts (order matters: speech + avatar before app) -->
+  <script src="avatar.js"></script>
+  <script src="speech.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
