@@ -18,12 +18,17 @@ env/
 model/*.h5
 model/*.tflite
 model/*.keras
+model/*.pkl
 model/checkpoints/
 
 # ===== Dataset images (large binary) =====
 dataset/signs/**/*.jpg
 dataset/signs/**/*.jpeg
 dataset/signs/**/*.png
+
+# ===== Generated runtime files =====
+tts_cache/
+calibration_data.json
 
 # ===== OS files =====
 .DS_Store
@@ -47,3 +52,4 @@ node_modules/
 *.env
 .env.*
 !.env.example
+

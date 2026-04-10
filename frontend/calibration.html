@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignBridge AI — Hand Calibration</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        .calibration-card { max-width: 600px; width: 100%; padding: 2rem; text-align: center; }
+        .calibration-card h1 { color: var(--neon-blue); font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .calibration-card p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        .cam-wrap { position: relative; width: 100%; max-width: 480px; margin: 0 auto 1.5rem; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-glass); }
+        .cam-wrap video { width: 100%; display: block; transform: scaleX(-1); }
+        .cam-wrap canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        .progress-wrap { width: 100%; background: var(--bg-secondary); border-radius: 20px; height: 12px; margin-bottom: 1rem; overflow: hidden; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-green)); border-radius: 20px; transition: width 0.3s ease; width: 0%; }
+        .status-msg { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; min-height: 1.4em; }
+        .btn-start { background: linear-gradient(135deg, var(--neon-blue), #0077aa); color: #fff; border: none; padding: 0.8rem 2.5rem; border-radius: 30px; font-size: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(0,212,255,0.4); }
+        .btn-start:disabled { opacity: 0.5; cursor: not-allowed; }
+        .samples-count { font-size: 2rem; font-weight: bold; color: var(--neon-blue); }
+    </style>
+</head>
+<body>
+    <div class="calibration-card glass-card">
+        <h1>⚙️ Hand Calibration</h1>
+        <p>Hold your open hand steady in front of the camera for 30 samples. This helps SignBridge AI adapt to your hand size for better accuracy.</p>
+
+        <div class="cam-wrap">
+            <video id="calVideo" autoplay playsinline muted></video>
+            <canvas id="calCanvas"></canvas>
+        </div>
+
+        <div class="samples-count" id="sampleCount">0 / 30</div>
+        <div class="progress-wrap">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="status-msg" id="statusMsg">Press Start to begin calibration</div>
+
+        <button class="btn-start" id="startBtn" onclick="startCalibration()">▶ Start Calibration</button>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let stream = null, interval = null, samples = 0;
+        const MAX_SAMPLES = 30;
+
+        async function startCalibration() {
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('statusMsg').textContent = 'Starting camera...';
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                const vid = document.getElementById('calVideo');
+                vid.srcObject = stream;
+                await vid.play();
+                document.getElementById('statusMsg').textContent = 'Hold your open hand still in view...';
+                samples = 0;
+                interval = setInterval(captureSample, 500);
+            } catch(e) {
+                document.getElementById('statusMsg').textContent = 'Camera error: ' + e.message;
+                document.getElementById('startBtn').disabled = false;
+            }
+        }
+
+        async function captureSample() {
+            const vid = document.getElementById('calVideo');
+            if (vid.readyState < 2) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
+            canvas.getContext('2d').drawImage(vid, 0, 0);
+            const b64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+
+            try {
+                const res = await fetch(`${API_BASE}/api/detect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ frame: b64 }),
+                    signal: AbortSignal.timeout(3000)
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.landmarks && data.landmarks.length > 0) {
+                    await fetch(`${API_BASE}/api/calibrate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ landmarks: data.landmarks })
+                    });
+                    samples++;
+                    document.getElementById('sampleCount').textContent = `${samples} / ${MAX_SAMPLES}`;
+                    document.getElementById('progressBar').style.width = `${(samples/MAX_SAMPLES)*100}%`;
+
+                    if (samples >= MAX_SAMPLES) {
+                        clearInterval(interval);
+                        stream && stream.getTracks().forEach(t => t.stop());
+                        document.getElementById('statusMsg').textContent = '✅ Calibration complete! You can close this window.';
+                        document.getElementById('startBtn').textContent = '✓ Done';
+                    }
+                } else {
+                    document.getElementById('statusMsg').textContent = 'No hand detected — keep your hand in view';
+                }
+            } catch(e) {
+                document.getElementById('statusMsg').textContent = 'Backend unreachable — is the server running?';
+            }
+        }
+    </script>
+</body>
+</html>
