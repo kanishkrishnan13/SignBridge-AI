@@ -1,25 +1,49 @@
 # ===== SignBridge AI — Python Dependencies =====
+#
+# IMPORTANT — Numpy compatibility notes
+# ======================================
+# mediapipe>=0.10.14 requires numpy>=2.x which BREAKS tensorflow<=2.15 and
+# scikit-learn<=1.3.  The versions below are carefully pinned so that all
+# packages install cleanly without conflicts:
+#
+#   numpy 1.26.4   ← satisfies mediapipe 0.10.9, tensorflow 2.15, scikit-learn 1.4
+#   mediapipe 0.10.9 ← last release that works with numpy 1.x
+#   tensorflow 2.15.0 ← requires numpy>=1.23.5,<2.0
+#   scikit-learn 1.4.2 ← requires numpy>=1.19.5,<2.0
+#
+# Install command (use exactly this to avoid resolver issues):
+#   pip install -r requirements.txt --no-deps
+#   pip install -r requirements.txt
+#
+# Or install in order:
+#   pip install "numpy==1.26.4"
+#   pip install "tensorflow==2.15.0" "scikit-learn==1.4.2" "mediapipe==0.10.9"
+#   pip install -r requirements.txt
+
+# Core numeric stack — pin first to avoid conflicts
+numpy==1.26.4
 
 # Web framework
-Flask>=2.3.0
-flask-cors>=4.0.0
+Flask==2.3.3
+flask-cors==4.0.0
 
 # Computer vision & hand tracking
-mediapipe>=0.10.0
-opencv-python-headless>=4.8.0
+# mediapipe 0.10.9 = last version compatible with numpy 1.x
+mediapipe==0.10.9
+opencv-python-headless==4.9.0.80
 
 # Machine learning
-tensorflow>=2.13.0
-numpy>=1.24.0
-pandas>=2.0.0
-scikit-learn>=1.3.0
+# tensorflow 2.15.0 supports numpy>=1.23.5,<2.0  (safe with 1.26.4)
+tensorflow==2.15.0
+pandas==2.1.4
+scikit-learn==1.4.2
 
 # Text-to-speech
-gTTS>=2.3.2
+gTTS==2.3.2
 
 # Image processing
-Pillow>=10.0.0
+Pillow==10.2.0
 
 # HTTP client (for test pipeline script)
-requests>=2.31.0
+requests==2.31.0
 
