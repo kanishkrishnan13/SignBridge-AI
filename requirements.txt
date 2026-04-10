@@ -1,5 +1,20 @@
-Flask
-MediaPipe
-TensorFlow
-OpenCV
-gTTS
+# ===== SignBridge AI — Python Dependencies =====
+
+# Web framework
+Flask>=2.3.0
+flask-cors>=4.0.0
+
+# Computer vision & hand tracking
+mediapipe>=0.10.0
+opencv-python-headless>=4.8.0
+
+# Machine learning
+tensorflow>=2.13.0
+numpy>=1.24.0
+
+# Text-to-speech
+gTTS>=2.3.2
+
+# HTTP client (for test pipeline script)
+requests>=2.31.0
+

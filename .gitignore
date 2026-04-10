@@ -1,0 +1,49 @@
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.env
+
+# ===== Model files =====
+model/*.h5
+model/*.tflite
+model/*.keras
+model/checkpoints/
+
+# ===== Dataset images (large binary) =====
+dataset/signs/**/*.jpg
+dataset/signs/**/*.jpeg
+dataset/signs/**/*.png
+
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Node (if ever added) =====
+node_modules/
+
+# ===== Secrets =====
+*.env
+.env.*
+!.env.example
