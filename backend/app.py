@@ -8,10 +8,11 @@ import numpy as np
 
 # Ensure the backend directory is on the path regardless of CWD
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+_FRONTEND_DIR = os.path.join(os.path.dirname(_BACKEND_DIR), 'frontend')
 if _BACKEND_DIR not in sys.path:
     sys.path.insert(0, _BACKEND_DIR)
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 
 from gesture_detector import GestureDetector
@@ -31,7 +32,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # App factory
 # ---------------------------------------------------------------------------
-app = Flask(__name__)
+app = Flask(__name__, static_folder=_FRONTEND_DIR, static_url_path='')
 CORS(app)
 
 # ---------------------------------------------------------------------------
@@ -94,6 +95,12 @@ def _json_error(message: str, status: int = 400):
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
+@app.route('/')
+def serve_index():
+    """Serve the frontend index.html."""
+    return send_from_directory(_FRONTEND_DIR, 'index.html')
+
 
 @app.route('/api/health', methods=['GET'])
 def health():
